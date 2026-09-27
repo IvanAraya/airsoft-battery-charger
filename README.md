@@ -22,6 +22,15 @@ PWA para calcular el tiempo de carga de baterías de réplicas de airsoft:
 
 Son estimaciones; sigue siempre las indicaciones del fabricante.
 
+## ¿Cómo saber la carga actual?
+
+- **LiPo / Li-Ion:** mide el voltaje en reposo (30 min sin usar ni cargar) con un LiPo checker,
+  el cargador balanceador o un multímetro, e ingrésalo en *Voltaje medido*. La app acepta el total
+  del pack o el voltaje por celda y estima el % con una tabla de referencia (LiPo: 4,20 V = 100 %,
+  3,84 V ≈ 50 %, 3,50 V ≈ 0 %).
+- **NiMH / NiCd:** el voltaje casi no cambia durante la descarga, así que no sirve para estimar la carga.
+  Descárgala antes (hasta ≈1,0 V por celda) y calcula con 0 %.
+
 ## Actualizaciones (Network First)
 
 El service worker (`sw.js`) usa la estrategia **Network First**: cada petición va primero a la red

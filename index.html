@@ -62,8 +62,31 @@
 
       <div class="field">
         <label for="soc">Carga actual de la batería: <output id="soc-out" for="soc">0 %</output></label>
-        <input id="soc" name="soc" type="range" min="0" max="95" step="5" value="0">
+        <input id="soc" name="soc" type="range" min="0" max="100" step="1" value="0">
       </div>
+
+      <div class="field" id="voltage-field">
+        <label for="voltage">Voltaje medido (opcional)</label>
+        <div class="input-unit">
+          <input id="voltage" name="voltage" type="number" inputmode="decimal" min="0" step="0.01" placeholder="p. ej. 7,68">
+          <span>V</span>
+        </div>
+        <p class="hint">Mide con la batería en reposo (30 min sin usar ni cargar). Puedes ingresar el voltaje total del pack o el de una celda.</p>
+        <p id="voltage-result" class="voltage-result" hidden></p>
+        <details class="ref-table">
+          <summary>Tabla de referencia (voltaje por celda en reposo)</summary>
+          <table>
+            <thead><tr><th>V por celda</th><th>Carga</th></tr></thead>
+            <tbody id="soc-table"></tbody>
+          </table>
+        </details>
+      </div>
+
+      <p id="nickel-note" class="note" hidden>
+        En NiMH/NiCd el voltaje casi no cambia durante la descarga, así que no indica bien la carga.
+        Descárgala antes (hasta ≈1,0 V por celda) y calcula con 0 %. Con un cargador sin corte automático,
+        no estimes a ojo: podrías sobrecargarla.
+      </p>
     </form>
 
     <section class="card result" aria-live="polite">

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   calculate,
   classifyCRate,
+  estimateSocFromVoltage,
   formatDuration,
   packVoltages,
   recommendedCurrent,
@@ -68,4 +69,22 @@ test('formato de duración', () => {
   assert.equal(formatDuration(45), '45 min');
   assert.equal(formatDuration(120), '2 h');
   assert.equal(formatDuration(961), '16 h 1 min');
+});
+
+test('estimación de carga por voltaje (LiPo)', () => {
+  assert.deepEqual(estimateSocFromVoltage('lipo', 7.68, 2), { ok: true, perCell: 3.84, soc: 50, warning: null });
+  assert.equal(estimateSocFromVoltage('lipo', 3.84, 2).soc, 50);
+  assert.equal(estimateSocFromVoltage('lipo', 3.855, 2).soc, 55);
+  assert.equal(estimateSocFromVoltage('lipo', 4.2, 1).soc, 100);
+  assert.equal(estimateSocFromVoltage('lipo', 12.6, 3).soc, 100);
+});
+
+test('estimación de carga por voltaje: advertencias y casos inválidos', () => {
+  assert.equal(estimateSocFromVoltage('lipo', 2.4, 2).ok, false);
+  assert.equal(estimateSocFromVoltage('lipo', 7.4, 1).ok, false);
+  const low = estimateSocFromVoltage('liion', 2.9, 1);
+  assert.equal(low.soc, 0);
+  assert.equal(low.warning, 'overdischarged');
+  assert.equal(estimateSocFromVoltage('lipo', 4.3, 1).warning, 'overcharged');
+  assert.deepEqual(estimateSocFromVoltage('nimh', 9.6, 8), { ok: false, reason: 'unsupported' });
 });

@@ -9,6 +9,8 @@ export const CHEMISTRIES = {
     cell: { nominal: 1.2, full: 1.45, min: 1.0, storage: null },
     // Factor de ineficiencia: la carga de NiMH pierde energía en forma de calor.
     efficiencyFactor: 1.4,
+    // El voltaje de NiMH/NiCd es casi plano: no sirve para estimar la carga.
+    socCurve: null,
     cells: [6, 7, 8, 9, 10, 11, 12],
     defaultCells: 8,
     recommended: { min: 0.5, max: 1.0 },
@@ -26,6 +28,7 @@ export const CHEMISTRIES = {
     family: 'nickel',
     cell: { nominal: 1.2, full: 1.45, min: 1.0, storage: null },
     efficiencyFactor: 1.2,
+    socCurve: null,
     cells: [6, 7, 8, 9, 10, 11, 12],
     defaultCells: 8,
     recommended: { min: 1.0, max: 1.0 },
@@ -44,6 +47,11 @@ export const CHEMISTRIES = {
     cell: { nominal: 3.7, full: 4.2, min: 3.0, storage: 3.8 },
     // Factor que aproxima la fase CV (voltaje constante) al final de la carga.
     efficiencyFactor: 1.2,
+    // Voltaje en reposo por celda → % de carga (aproximado).
+    socCurve: [
+      [3.5, 0], [3.61, 5], [3.69, 10], [3.73, 20], [3.77, 30], [3.8, 40],
+      [3.84, 50], [3.87, 60], [3.95, 70], [4.02, 80], [4.11, 90], [4.2, 100],
+    ],
     cells: [1, 2, 3, 4],
     defaultCells: 2,
     recommended: { min: 0.5, max: 1.0 },
@@ -62,6 +70,10 @@ export const CHEMISTRIES = {
     family: 'lithium',
     cell: { nominal: 3.6, full: 4.2, min: 3.0, storage: 3.7 },
     efficiencyFactor: 1.2,
+    socCurve: [
+      [3.0, 0], [3.3, 5], [3.5, 10], [3.6, 20], [3.66, 30], [3.72, 40],
+      [3.78, 50], [3.85, 60], [3.92, 70], [4.0, 80], [4.1, 90], [4.2, 100],
+    ],
     cells: [1, 2, 3, 4],
     defaultCells: 3,
     recommended: { min: 0.3, max: 0.5 },
@@ -157,6 +169,42 @@ export function calculate({ chemistry, cells, capacityMah, currentMa, stateOfCha
     voltages: packVoltages(chemistry, cells),
     label: packLabel(chemistry, cells),
   };
+}
+
+/**
+ * Estima el % de carga a partir del voltaje medido en reposo.
+ * Acepta el voltaje total del pack o el voltaje por celda: en litio una celda
+ * nunca supera 5 V y un pack 2S nunca baja de 6 V, así que > 5 V se toma como total.
+ */
+export function estimateSocFromVoltage(chemistryId, volts, cells) {
+  const { socCurve } = getChemistry(chemistryId);
+  if (!socCurve) return { ok: false, reason: 'unsupported' };
+  if (!Number.isFinite(volts) || volts <= 0) return { ok: false, reason: 'invalid' };
+
+  const perCell = volts > 5 ? volts / cells : volts;
+  if (perCell < 2.5 || perCell > 4.35) return { ok: false, reason: 'out-of-range', perCell };
+
+  let soc;
+  const first = socCurve[0];
+  const last = socCurve[socCurve.length - 1];
+  if (perCell <= first[0]) soc = first[1];
+  else if (perCell >= last[0]) soc = last[1];
+  else {
+    for (let i = 1; i < socCurve.length; i++) {
+      const [v1, p1] = socCurve[i];
+      if (perCell <= v1) {
+        const [v0, p0] = socCurve[i - 1];
+        soc = p0 + ((perCell - v0) / (v1 - v0)) * (p1 - p0);
+        break;
+      }
+    }
+  }
+
+  let warning = null;
+  if (perCell > 4.25) warning = 'overcharged';
+  else if (perCell < 3.0) warning = 'overdischarged';
+
+  return { ok: true, perCell, soc: Math.round(Math.min(100, Math.max(0, soc))), warning };
 }
 
 /** Formatea minutos como "2 h 48 min". */

@@ -1,4 +1,4 @@
-import { calculate, formatDuration, getChemistry } from './calc.js';
+import { calculate, estimateSocFromVoltage, formatDuration, getChemistry } from './calc.js';
 
 const STORAGE_KEY = 'airsoft-battery-charger:v1';
 
@@ -8,6 +8,7 @@ const capacityInput = document.getElementById('capacity');
 const currentInput = document.getElementById('current');
 const socInput = document.getElementById('soc');
 const socOut = document.getElementById('soc-out');
+const voltageInput = document.getElementById('voltage');
 
 const $ = (id) => document.getElementById(id);
 const fmtNumber = (n, digits = 1) => n.toLocaleString('es', { maximumFractionDigits: digits });
@@ -34,6 +35,57 @@ function populateCells(chemistryId, preferred) {
       return new Option(text, String(n), false, n === value);
     }),
   );
+}
+
+const VOLTAGE_WARNING = {
+  overcharged: 'Sobre 4,2 V por celda: la batería está sobrecargada. No la cargues.',
+  overdischarged: 'Bajo 3,0 V por celda: revisa que el número de celdas sea correcto; si lo es, está sobredescargada. Si está hinchada no la cargues; si no, cárgala a baja corriente y vigílala.',
+};
+
+// Actualiza el bloque de voltaje según la química y, si hay un voltaje
+// ingresado, estima la carga y mueve el control deslizante.
+function applyVoltage() {
+  const chem = getChemistry(selectedChemistry());
+  const supported = Boolean(chem.socCurve);
+  $('voltage-field').hidden = !supported;
+  $('nickel-note').hidden = supported;
+
+  const output = $('voltage-result');
+  if (!supported) {
+    output.hidden = true;
+    return;
+  }
+
+  $('soc-table').replaceChildren(
+    ...[...chem.socCurve].reverse().map(([v, pct]) => {
+      const row = document.createElement('tr');
+      row.append(
+        Object.assign(document.createElement('td'), { textContent: `${v.toLocaleString('es', { minimumFractionDigits: 2 })} V` }),
+        Object.assign(document.createElement('td'), { textContent: `${pct} %` }),
+      );
+      return row;
+    }),
+  );
+
+  if (voltageInput.value === '') {
+    output.hidden = true;
+    return;
+  }
+
+  const estimate = estimateSocFromVoltage(chem.id, Number(voltageInput.value), Number(cellsSelect.value));
+  output.hidden = false;
+  if (!estimate.ok) {
+    output.dataset.level = 'caution';
+    output.textContent = estimate.reason === 'out-of-range'
+      ? `${fmtNumber(estimate.perCell, 2)} V por celda está fuera de rango: revisa la medición y el número de celdas.`
+      : 'Ingresa un voltaje válido.';
+    return;
+  }
+
+  socInput.value = estimate.soc;
+  const summary = `${fmtNumber(estimate.perCell, 2)} V por celda → ≈${estimate.soc} %`;
+  output.dataset.level = estimate.warning ? 'danger' : 'ok';
+  output.textContent = estimate.warning ? `${summary}. ${VOLTAGE_WARNING[estimate.warning]}` : summary;
 }
 
 function loadState() {
@@ -78,7 +130,7 @@ function render() {
   errors.hidden = true;
   $('result-body').hidden = false;
 
-  $('time').textContent = formatDuration(result.minutes);
+  $('time').textContent = input.stateOfCharge >= 100 ? 'Batería llena' : formatDuration(result.minutes);
   $('pack-label').textContent = `${chem.name} ${result.label}`;
 
   const crate = $('crate');
@@ -107,12 +159,19 @@ function init() {
   }
   populateCells(selectedChemistry(), saved?.cells);
 
-  form.addEventListener('change', (e) => {
-    if (e.target.name === 'chemistry') populateCells(selectedChemistry(), Number(cellsSelect.value));
+  const onFormEvent = (e) => {
+    if (e.type === 'change' && e.target.name === 'chemistry') {
+      populateCells(selectedChemistry(), Number(cellsSelect.value));
+    }
+    // Mover el control a mano reemplaza la estimación por voltaje.
+    if (e.target === socInput) voltageInput.value = '';
+    applyVoltage();
     render();
-  });
-  form.addEventListener('input', render);
+  };
+  form.addEventListener('change', onFormEvent);
+  form.addEventListener('input', onFormEvent);
   form.addEventListener('submit', (e) => e.preventDefault());
+  applyVoltage();
   render();
 }
 
