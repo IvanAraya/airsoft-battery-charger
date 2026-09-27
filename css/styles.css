@@ -187,6 +187,10 @@ output { color: var(--text); }
 .crate[data-level="caution"] { background: var(--warn-bg); color: var(--warn); }
 .crate[data-level="danger"] { background: var(--danger-bg); color: var(--danger); }
 
+.crate-help { margin: -6px 0 12px; text-align: left; font-size: .8rem; color: var(--muted); }
+.crate-help summary { cursor: pointer; width: fit-content; margin-left: auto; color: var(--accent); }
+.crate-help p { margin: 6px 0 0; }
+
 .stats {
   display: grid;
   grid-template-columns: 1fr 1fr;

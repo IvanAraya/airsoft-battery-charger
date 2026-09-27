@@ -137,6 +137,8 @@ function render() {
   crate.dataset.level = result.level;
   $('crate-value').textContent = `${fmtNumber(result.cRate, 2)}C`;
   $('crate-text').textContent = LEVEL_TEXT[result.level];
+  $('crate-help-example').textContent =
+    `En esta batería de ${input.capacityMah} mAh: 1C = ${input.capacityMah} mA y 0,5C = ${Math.round(input.capacityMah / 2)} mA.`;
 
   const { min, max } = result.recommended;
   $('recommended').textContent = min === max ? `${min} mA` : `${min}–${max} mA`;
