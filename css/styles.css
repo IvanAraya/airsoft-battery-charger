@@ -63,6 +63,22 @@ body {
 }
 .app-header h1 { margin: 0; font-size: 1.15rem; line-height: 1.2; }
 .subtitle { margin: 0; font-size: .8rem; opacity: .75; }
+.install-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 700;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  min-height: 36px;
+  background: #8fb35a;
+  color: #121510;
+  cursor: pointer;
+}
+.install-btn[hidden] { display: none; }
+.install-btn:focus-visible { outline: 2px solid #eef1ea; outline-offset: 2px; }
 
 main {
   max-width: 640px;

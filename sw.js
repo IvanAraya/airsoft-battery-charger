@@ -2,7 +2,7 @@
 // siempre intenta obtener la versión más reciente de la red y, si falla
 // (sin conexión o tiempo de espera agotado), responde con la copia en caché.
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `airsoft-battery-charger-${CACHE_VERSION}`;
 const NETWORK_TIMEOUT_MS = 4000;
 

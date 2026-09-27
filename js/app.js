@@ -163,5 +163,38 @@ function registerServiceWorker() {
   });
 }
 
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function setupInstallButton() {
+  const button = $('install-btn');
+  let deferredPrompt = null;
+
+  // Chrome/Edge (Android y escritorio) emiten este evento cuando la app es instalable.
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    if (isStandalone()) return;
+    deferredPrompt = event;
+    button.hidden = false;
+  });
+
+  button.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    const prompt = deferredPrompt;
+    deferredPrompt = null;
+    button.hidden = true;
+    // Un prompt solo se puede usar una vez; si el usuario lo rechaza,
+    // Chrome volverá a emitir beforeinstallprompt más adelante.
+    await prompt.prompt();
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    button.hidden = true;
+  });
+}
+
 init();
+setupInstallButton();
 registerServiceWorker();
