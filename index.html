@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Carga de Baterías Airsoft</title>
+  <meta name="description" content="Calcula el tiempo de carga de baterías NiMH, NiCd, LiPo y Li-Ion para réplicas de airsoft.">
+  <meta name="theme-color" content="#1f2a1c">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <img src="icons/icon.svg" alt="" width="36" height="36">
+    <div>
+      <h1>Carga de Baterías Airsoft</h1>
+      <p class="subtitle">NiMH · NiCd · LiPo · Li-Ion</p>
+    </div>
+  </header>
+
+  <div id="update-banner" class="update-banner" hidden>
+    <span>Hay una nueva versión disponible.</span>
+    <button type="button" id="update-btn">Actualizar</button>
+  </div>
+
+  <main>
+    <form id="calc-form" class="card" novalidate>
+      <fieldset class="chem-group">
+        <legend>Química de la batería</legend>
+        <div class="segmented" role="radiogroup">
+          <label><input type="radio" name="chemistry" value="nimh" checked><span>NiMH</span></label>
+          <label><input type="radio" name="chemistry" value="nicd"><span>NiCd</span></label>
+          <label><input type="radio" name="chemistry" value="lipo"><span>LiPo</span></label>
+          <label><input type="radio" name="chemistry" value="liion"><span>Li-Ion</span></label>
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <label for="cells">Configuración del pack</label>
+        <select id="cells" name="cells"></select>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="capacity">Capacidad</label>
+          <div class="input-unit">
+            <input id="capacity" name="capacity" type="number" inputmode="numeric" min="1" step="50" value="1600" required>
+            <span>mAh</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="current">Corriente del cargador</label>
+          <div class="input-unit">
+            <input id="current" name="current" type="number" inputmode="numeric" min="1" step="50" value="800" required>
+            <span>mA</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="soc">Carga actual de la batería: <output id="soc-out" for="soc">0 %</output></label>
+        <input id="soc" name="soc" type="range" min="0" max="95" step="5" value="0">
+      </div>
+    </form>
+
+    <section class="card result" aria-live="polite">
+      <div id="errors" class="errors" hidden></div>
+      <div id="result-body">
+        <p class="result-label">Tiempo estimado de carga</p>
+        <p class="result-time" id="time">—</p>
+        <p class="result-sub" id="pack-label"></p>
+
+        <div id="crate" class="crate">
+          <span class="crate-value" id="crate-value"></span>
+          <span class="crate-text" id="crate-text"></span>
+        </div>
+
+        <dl class="stats">
+          <div><dt>Corriente recomendada</dt><dd id="recommended"></dd></div>
+          <div><dt>Capacidad a reponer</dt><dd id="missing"></dd></div>
+          <div><dt>Voltaje nominal</dt><dd id="v-nominal"></dd></div>
+          <div><dt>Carga completa</dt><dd id="v-full"></dd></div>
+          <div><dt>Mínimo (descarga)</dt><dd id="v-min"></dd></div>
+          <div id="storage-row"><dt>Almacenamiento</dt><dd id="v-storage"></dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Consejos de seguridad</h2>
+      <ul id="tips" class="tips"></ul>
+    </section>
+
+    <p class="disclaimer">
+      Los tiempos son estimaciones. Níquel: capacidad ÷ corriente × 1,4 (NiMH) o × 1,2 (NiCd) por pérdidas.
+      Litio: capacidad ÷ corriente × 1,2 para incluir la fase de voltaje constante (CV).
+      Sigue siempre las indicaciones del fabricante de la batería y del cargador.
+    </p>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
